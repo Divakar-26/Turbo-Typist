@@ -48,3 +48,13 @@ void TextureManager::clean(){
   }
   textures.clear();
 }
+
+void TextureManager::drawRotated(const std::string &id,const SDL_FRect &dst, SDL_Renderer *renderer, SDL_FRect *src, double angle, const SDL_FPoint * center, SDL_FlipMode flip){
+  auto it = textures.find(id);
+  if(it != textures.end()){
+    SDL_RenderTextureRotated(renderer, it->second, src, &dst, angle,center, flip);
+  }
+  else{
+    std::cerr<<"Texture "<<id<<" not found in Textures"<<std::endl;
+  }
+}

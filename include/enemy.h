@@ -10,7 +10,7 @@ class Enemy{
     Enemy(int size, float x, float y, float speed,const std::string & word, const std::string&textureId);
     
     void update(float dt);
-    void render(SDL_Renderer * renderer);
+    void render(SDL_Renderer * renderer, float playerX, float playerY);
 
     float getY() const {return y;}
     bool isOffScreen(int screenHeight) const;

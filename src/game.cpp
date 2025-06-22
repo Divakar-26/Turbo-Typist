@@ -69,7 +69,7 @@ void Game::handleEvents()
         {
             isRunning = false;
         }
-        player->handleEvent(event);
+        // player->handleEvent(event);
     }
 
     
@@ -86,8 +86,16 @@ void Game::update(float dt)
   for(auto & it: enemies){
     it.update(dt);
   }
-  // enemies.erase(std::remove_if(enemies.begin(), enemies.end() , [this](const Enemy& e) {return e.isOffScreen(WINDOW_H);}), enemies.end());
- 
+  
+  for(auto it = enemies.begin(); it != enemies.end();){
+    if(it->isOffScreen(WINDOW_H)){
+      it = enemies.erase(it);
+    }
+    else{
+      ++it;
+    }
+  }
+
   for(auto & it: bgLayer){
     it.update(dt);
   }
@@ -107,7 +115,7 @@ void Game::render()
 
     player->render(renderer);
     for(auto & it: enemies){
-      it.render(renderer);
+      it.render(renderer, player->getX(), player->getY());
     }
 
     SDL_RenderPresent(renderer);

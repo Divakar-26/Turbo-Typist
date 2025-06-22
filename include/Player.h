@@ -15,6 +15,8 @@ class Player{
     void render(SDL_Renderer * renderer);
     void handleEvent(SDL_Event & event);
     void update(float dt);
+    float getX() {return x;}
+    float getY() {return y;}
 
   private:
     float x,y;
