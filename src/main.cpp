@@ -4,7 +4,7 @@ Game game(800, 600);
 
 int main(int argc, char *argv[])
 {
-    if (!game.init("Verlet Simulation"))
+    if (!game.init("Turbo Typist"))
     {
         return -1;
     }

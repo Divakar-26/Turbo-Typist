@@ -9,13 +9,14 @@ class Enemy{
 
     Enemy(int size, float x, float y, float speed,const std::string & word, const std::string&textureId);
     
-    void update(float dt);
+    void update(float dt, float playerX, float playerY);
     void render(SDL_Renderer * renderer, float playerX, float playerY);
 
     float getY() const {return y;}
     bool isOffScreen(int screenHeight) const;
     const std::string & getWord() const {return word;}
-
+    float getX() const {return x;}
+    float getSize() {return size;}
 
   private:
     float x, y;

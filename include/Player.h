@@ -4,8 +4,10 @@
 #include<SDL3/SDL.h>
 #include <cwchar>
 #include <string>
+#include <vector>
 #include "textureManager.h"
 #include "animation.h"
+#include "bullet.h"
 
 class Player{
   public:
@@ -17,6 +19,8 @@ class Player{
     void update(float dt);
     float getX() {return x;}
     float getY() {return y;}
+    void shoot(std::vector<Bullet> & bullets);
+    void lookAt(float x, float y);
 
   private:
     float x,y;

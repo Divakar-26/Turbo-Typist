@@ -2,11 +2,16 @@
 
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
-#include<vector>
-#include"Player.h"
+#include <vector>
+#include "Player.h"
 #include "enemy.h"
 #include "parallaxLayer.h"
 #include <cstdlib>
+#include "bullet.h"
+#include "wordManager.h"
+#include "animation.h"
+#include"textManager.h"
+
 
 class Game
 {
@@ -24,7 +29,13 @@ public:
 
     void spawnEnemy();
 
+
+    bool initSDL();
+    bool initWindowAndRenderer(const char * title);
+    bool loadTextures();
+
     bool showGrid = true;
+
 private:
     int WINDOW_W;
     int WINDOW_H;
@@ -33,11 +44,23 @@ private:
     SDL_Window *window = nullptr;
     SDL_Renderer *renderer = nullptr;
 
-    Player * player;
+    Player *player;
 
     std::vector<Enemy> enemies;
     Uint32 lastSpawnTime = 0;
     Uint32 spawnDelay = 1500;
 
     std::vector<ParallaxLayer> bgLayer;
+    std::vector<ParallaxLayer> planetLayers;
+    Uint32 lastPlanetSpawnTime = 0;
+    const Uint32 planetSpawnDelay = 8000;
+
+    std::vector<Bullet> bullets;
+    Uint32 lastBulletTime = 0;
+    Uint32 bulletDelay = 50;
+
+    WordManager wordManager;
+    Animation *anim;
+    
+    TextManager * textManager;
 };
