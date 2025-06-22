@@ -1,0 +1,34 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Wall",
+      "-g",
+      "-Iinclude",
+      "-Iimgui",
+      "-Iimgui/backends",
+      "-I/usr/local/include",
+      "-c",
+      "src/game.cpp"
+    ],
+    "directory": "/home/divakar/Desktop/Turbo Typist",
+    "file": "/home/divakar/Desktop/Turbo Typist/src/game.cpp"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Wall",
+      "-g",
+      "-Iinclude",
+      "-Iimgui",
+      "-Iimgui/backends",
+      "-I/usr/local/include",
+      "-c",
+      "src/main.cpp"
+    ],
+    "directory": "/home/divakar/Desktop/Turbo Typist",
+    "file": "/home/divakar/Desktop/Turbo Typist/src/main.cpp"
+  }
+]

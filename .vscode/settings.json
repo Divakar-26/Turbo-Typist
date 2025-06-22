@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "__availability": "cpp",
+        "__hash_table": "cpp",
+        "semaphore": "cpp"
+    }
+}
