@@ -4,7 +4,7 @@
 #include<cmath>
 
 Bullet::Bullet(float x, float y, float vx, float vy, float speed, int size, const std::string &id): x(x), y(y), vx(vx), vy(vy), speed(speed), size(size), textureId(id){
-  anim = new Animation(48,48,2,100,true,2);
+  anim = new Animation(16,16,2,100,true,2);
   angle = std::atan2(vy, vx) * (180.0f / M_PI) + 180.0f;  // Calculate direction
 }
 

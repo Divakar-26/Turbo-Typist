@@ -79,5 +79,6 @@
         "__tuple": "cpp",
         "ios": "cpp",
         "locale": "cpp"
-    }
+    },
+    "cmake.sourceDirectory": "/home/divakar/Desktop/Turbo Typist/imgui/examples/example_android_opengl3"
 }

@@ -2,15 +2,17 @@
 
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
+#include <cstdlib>
+#include <ctime>
 #include <vector>
+
 #include "Player.h"
 #include "enemy.h"
 #include "parallaxLayer.h"
-#include <cstdlib>
 #include "bullet.h"
 #include "wordManager.h"
 #include "animation.h"
-#include"textManager.h"
+#include "textManager.h"
 
 
 class Game
@@ -34,6 +36,8 @@ public:
     bool initWindowAndRenderer(const char * title);
     bool loadTextures();
 
+
+    void handleEnemeyBulletCollison();
     bool showGrid = true;
 
 private:
@@ -57,7 +61,7 @@ private:
 
     std::vector<Bullet> bullets;
     Uint32 lastBulletTime = 0;
-    Uint32 bulletDelay = 50;
+    Uint32 bulletDelay = 0;
 
     WordManager wordManager;
     Animation *anim;

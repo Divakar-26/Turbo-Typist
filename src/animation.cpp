@@ -1,5 +1,4 @@
 #include "animation.h"
-#include "imgui_internal.h"
 #include <SDL3/SDL_rect.h>
 #include <SDL3/SDL_thread.h>
 #include <SDL3/SDL_timer.h>
