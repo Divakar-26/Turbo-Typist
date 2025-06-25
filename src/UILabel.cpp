@@ -23,7 +23,7 @@ void UILabel::animateInFromTop(float toY) {
     endY = toY + 100.0f;
     opacity = 0.0f;
 
-    x = x; // keep x
+    x = x; 
     y = startY;
 }
 
@@ -33,7 +33,7 @@ void UILabel::update(float dt) {
     if (animState == LabelAnimState::MOVING_IN) {
         animTime += dt;
         float t = std::min(animTime / duration, 1.0f);
-        t = 1 - std::pow(1 - t, 3); // easeOut
+        t = 1 - std::pow(1 - t, 3); 
 
         y = startY + (targetY - startY) * t;
         opacity = 255 * t;
@@ -51,7 +51,7 @@ void UILabel::update(float dt) {
     } else if (animState == LabelAnimState::MOVING_OUT) {
         animTime += dt;
         float t = std::min(animTime / duration, 1.0f);
-        t = t * t; // easeIn
+        t = t * t; 
 
         y = targetY + (endY - targetY) * t;
         opacity = 255 * (1.0f - t);

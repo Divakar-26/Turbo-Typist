@@ -15,7 +15,6 @@ void UIElement::update(float dt) {
         y += dirY * speed * dt;
     }
 
-    // Fade
     if (fadingOut) {
         opacity -= fadeSpeed * dt;
         if (opacity <= 0) {

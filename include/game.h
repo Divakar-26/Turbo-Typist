@@ -36,12 +36,14 @@ struct Level
     int wordLengthMin;
     int wordLengthMax;
     float enemySpeed;
-    float spawnDelay; // time between spawns
+    float spawnDelay; 
 
     Level(int lvl, int count, float speed, float delay, int minLen, int maxLen)
         : levelNumber(lvl), numEnemies(count), enemySpeed(speed), spawnDelay(delay),
           wordLengthMin(minLen), wordLengthMax(maxLen) {}
 };
+
+
 class Game
 {
 public:

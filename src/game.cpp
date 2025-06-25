@@ -74,10 +74,10 @@ bool Game::init(const char *title)
     float initialDelay = 2000.0f;
     int initialEnemies = 5;
 
-    for (int i = 1; i <= 9999; ++i) // Endless (or a large number)
+    for (int i = 1; i <= 9999; ++i) 
     {
-        float speed = initialSpeed + (i - 1) * 2.0f;                     // Increase slowly
-        float delay = std::max(500.0f, initialDelay - (i - 1) * 100.0f); // Never below 500ms
+        float speed = initialSpeed + (i - 1) * 2.0f;                     
+        float delay = std::max(500.0f, initialDelay - (i - 1) * 100.0f); 
         int numEnemies = initialEnemies + (i - 1) * 2;
 
         int minLength = std::min(5, 3 + i / 2);
@@ -158,7 +158,7 @@ void Game::handleEvents()
             if (quitToMainMenu->isClicked(event))
             {
                 gameState = GameState::MAIN_MENU;
-                // Reset positions or reinit as needed
+
                 startButton->moveTo(400 - startButton->getWidth() / 2, WINDOW_H - 150);
                 exitButton->moveTo(400 - exitButton->getWidth() / 2, WINDOW_H - 100);
                 settingsButton->moveTo(400 - settingsButton->getWidth() / 2, WINDOW_H - 50);
@@ -214,7 +214,7 @@ void Game::update(float dt)
     {
         levelTimer += dt;
 
-        if (levelTimer > 3.0f) // wait 3 seconds before next level
+        if (levelTimer > 3.0f) 
         {
             currentLevelIndex++;
 
@@ -238,7 +238,6 @@ void Game::update(float dt)
             }
         }
     }
-    // Only update player animation on menu (if needed)
     if (gameState == GameState::MAIN_MENU)
     {
         player->update(dt);
@@ -249,10 +248,9 @@ void Game::update(float dt)
         resumeButton->update(dt);
         quitToMainMenu->update(dt);
         quitButton->update(dt);
-        // player->update(dt);  <- Avoid this if it’s gameplay logic
+        // player->update(dt); 
     }
 
-    // UI elements update regardless of state
     startButton->update(dt);
     exitButton->update(dt);
     settingsButton->update(dt);
@@ -278,7 +276,7 @@ void Game::render()
 
     if (gameState == GameState::PAUSED)
     {
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 160); // RGBA (black with 160 alpha)
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 160); 
         SDL_FRect pauseBox = {
             WINDOW_W / 2 - 250.0f,
             WINDOW_H / 2 - 150.0f,

@@ -6,10 +6,10 @@ protected:
     float x, y;
     float targetX, targetY;
     float opacity = 255;
-    float speed = 300.0f; // Pixels per second
+    float speed = 300.0f;
     bool fadingOut = false;
     bool fadingIn = false;
-    float fadeSpeed = 300.0f; // Opacity per second
+    float fadeSpeed = 300.0f; 
 
 public:
     UIElement(float x, float y);

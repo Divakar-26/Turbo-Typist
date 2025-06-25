@@ -12,7 +12,6 @@ void EnemyManager::spawnEnemy()
 {
     static std::vector<std::string> textures = {"enemy_1", "enemy_2", "enemy_3", "enemy_4", "enemy_5"};
 
-    // Step 1: Collect used first letters
     std::unordered_set<char> usedLetters;
     for (const auto &e : enemies)
     {
@@ -20,7 +19,7 @@ void EnemyManager::spawnEnemy()
             usedLetters.insert(std::tolower(e.getWord()[0]));
     }
 
-    // Step 2: Get a new word avoiding used letters
+
     std::string word = wordManager->getWordAvoiding(usedLetters, 8);
     if (word.empty())
     {
@@ -32,7 +31,7 @@ void EnemyManager::spawnEnemy()
 
     std::string texId = textures[rand() % textures.size()];
     float randX = rand() % (windowW - 48);
-    float speed = enemySpeed + rand() % 20 - 10; // variation
+    float speed = enemySpeed + rand() % 20 - 10;
     int s = rand() % 40 + 40;
 
     enemies.emplace_back(s, randX, -48.0f, speed, word, texId);
@@ -115,7 +114,7 @@ void EnemyManager::render(SDL_Renderer *renderer, Player *player)
             textManager->renderText(it.getWord(),
                                     it.getX() + it.getSize() / 2.0f,
                                     it.getY() - 20,
-                                    {255, 0, 0, 255}, // Red color for targeted enemy
+                                    {255, 0, 0, 255}, 
                                     {0, 0, 0, 128},
                                     true);
         }
@@ -124,7 +123,7 @@ void EnemyManager::render(SDL_Renderer *renderer, Player *player)
             textManager->renderText(it.getWord(),
                                     it.getX() + it.getSize() / 2.0f,
                                     it.getY() - 20,
-                                    {255, 255, 255, 255}, // White color for normal enemies
+                                    {255, 255, 255, 255},
                                     {0, 0, 0, 128},
                                     true);
         }
@@ -181,7 +180,7 @@ void EnemyManager::handleTyping(std::string &inputBuffer, Player *player, std::v
             }
         }
     }
-    inputBuffer.clear(); // Don't forget to clear it after processing
+    inputBuffer.clear(); 
 }
 
 void EnemyManager::handleEnemyBulletCollision(std::vector<Bullet> &bullets)
@@ -194,7 +193,7 @@ void EnemyManager::handleEnemyBulletCollision(std::vector<Bullet> &bullets)
         {
             float bx = bulletIt->getX();
             float by = bulletIt->getY();
-            float bw = bulletIt->getWidth(); // or size
+            float bw = bulletIt->getWidth(); 
             float bh = bulletIt->getHeight();
 
             float ex = enemyIt->getX();
