@@ -36,7 +36,7 @@ private:
   float hoverOffset = 0.0f;
 
   float targetX, targetY;
-  float moveSpeed = 300.0f;
+  float moveSpeed = 100.0f;
 };
 
 #endif // !DEBUG

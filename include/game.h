@@ -26,6 +26,7 @@ enum class GameState
     PLAYING,
     PAUSED,
     LEVEL_CLEARED,
+    LEVEL_STARTING,
     GAME_OVER
 };
 
@@ -36,13 +37,12 @@ struct Level
     int wordLengthMin;
     int wordLengthMax;
     float enemySpeed;
-    float spawnDelay; 
+    float spawnDelay;
 
     Level(int lvl, int count, float speed, float delay, int minLen, int maxLen)
         : levelNumber(lvl), numEnemies(count), enemySpeed(speed), spawnDelay(delay),
           wordLengthMin(minLen), wordLengthMax(maxLen) {}
 };
-
 
 class Game
 {
@@ -63,6 +63,7 @@ public:
     bool initSDL();
     bool initWindowAndRenderer(const char *title);
     bool loadTextures();
+
 
 private:
     int WINDOW_W;
@@ -98,12 +99,12 @@ private:
     UILabel *label = nullptr;
 
     TextureObject *logoTex;
-    // UILabel *levelLabel = nullptr;
 
     int currentLevelIndex = 0;
     float levelTimer = 0.0f;
     bool waitingForNextLevel = false;
 
     std::vector<Level> levels;
-    UILabel *levelLabel;
+
+    UIButton *levelIndication = nullptr;
 };

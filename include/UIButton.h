@@ -30,4 +30,12 @@ public:
         width = w;
         height = h;
     }
+
+    void setText(const std::string &text)
+    {
+        this->text = text;
+    }
+
+    using UIElement::fadeIn;
+    using UIElement::fadeOut;
 };

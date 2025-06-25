@@ -1,12 +1,14 @@
 #include "game.h"
 
 std::string inputBuffer;
+float logoW, logoH;
 
+bool levelIndicationShown = false;
+Uint32 levelIndicationTime = 0.0f;
 
 Game::Game(int width, int height)
     : WINDOW_W(width), WINDOW_H(height), isRunning(false) {}
 
-float logoW, logoH;
 Game::~Game()
 {
     delete startButton;
@@ -42,7 +44,7 @@ bool Game::init(const char *title)
 
     // textManager and loading font
     textManager = new TextManager(renderer);
-    textManager->loadFont("assets/sans.ttf", 20);
+    textManager->loadFont("assets/mago1.ttf", 20);
 
     uiTextManager = new TextManager(renderer);
     uiTextManager->loadFont("assets/mago1.ttf", 40);
@@ -66,6 +68,8 @@ bool Game::init(const char *title)
     quitToMainMenu->moveTo(400 - quitToMainMenu->getWidth() / 2, 260);
     quitButton->moveTo(400 - quitButton->getWidth() / 2, 320);
 
+    levelIndication = new UIButton(-200, WINDOW_H / 2, "HELLO", {255, 0, 0, 0}, {255, 255, 255, 255}, uiTextManager);
+
     logoW = 400.0f;
     logoH = 400.0f;
     logoTex = new TextureObject("logo", WINDOW_W / 2 - logoW / 2, -16 * 4, logoW, logoH);
@@ -74,10 +78,10 @@ bool Game::init(const char *title)
     float initialDelay = 2000.0f;
     int initialEnemies = 5;
 
-    for (int i = 1; i <= 9999; ++i) 
+    for (int i = 1; i <= 9999; ++i)
     {
-        float speed = initialSpeed + (i - 1) * 2.0f;                     
-        float delay = std::max(500.0f, initialDelay - (i - 1) * 100.0f); 
+        float speed = initialSpeed + (i - 1) * 2.0f;
+        float delay = std::max(500.0f, initialDelay - (i - 1) * 100.0f);
         int numEnemies = initialEnemies + (i - 1) * 2;
 
         int minLength = std::min(5, 3 + i / 2);
@@ -104,46 +108,56 @@ void Game::handleEvents()
         {
             inputBuffer += event.text.text;
             SDL_Log("Typed character: %c", inputBuffer[0]);
-
             enemyManager->handleTyping(inputBuffer, player, bullets);
         }
 
         if (gameState == GameState::MAIN_MENU)
         {
 
+            // buttons handle event
             startButton->handleEvent(event);
             exitButton->handleEvent(event);
             settingsButton->handleEvent(event);
+
+            // if startbutton is pressed
             if (startButton->isClicked(event))
             {
+                // move player to position
                 player->moveTo(WINDOW_W / 2 - 32, WINDOW_H - 32 - 100);
+
+                // move logo out of frame
                 logoTex->moveTo(200, -500);
                 logoTex->fadeOut();
+
+                // move buttons out of frame
                 exitButton->moveTo(400 - exitButton->getWidth() / 2, WINDOW_H + 150);
                 startButton->moveTo(400 - startButton->getWidth() / 2, WINDOW_H + 200);
                 settingsButton->moveTo(400 - settingsButton->getWidth() / 2, WINDOW_H + 250);
 
                 const Level &level = levels[currentLevelIndex];
-                enemyManager->clear(); // ensure no previous garbage
-                bullets.clear();       // clear bullets
+                enemyManager->clear();
+                bullets.clear();
+
+
                 enemyManager->startWave(level.numEnemies, level.enemySpeed, level.spawnDelay);
-
-
                 gameState = GameState::PLAYING;
-                // Trigger your logic here, like changing game state
             }
+
             else if (exitButton->isClicked(event))
             {
+                // SELF EXPLANOTARY 🗣️
                 isRunning = false;
             }
         }
         if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_ESCAPE)
         {
+            // triger pause menu
             if (gameState == GameState::PLAYING)
                 gameState = GameState::PAUSED;
             else if (gameState == GameState::PAUSED)
                 gameState = GameState::PLAYING;
         }
+
         if (gameState == GameState::PAUSED)
         {
             resumeButton->handleEvent(event);
@@ -157,16 +171,18 @@ void Game::handleEvents()
 
             if (quitToMainMenu->isClicked(event))
             {
-                gameState = GameState::MAIN_MENU;
 
                 startButton->moveTo(400 - startButton->getWidth() / 2, WINDOW_H - 150);
                 exitButton->moveTo(400 - exitButton->getWidth() / 2, WINDOW_H - 100);
                 settingsButton->moveTo(400 - settingsButton->getWidth() / 2, WINDOW_H - 50);
-                startButton->fadeIn();
+
                 logoTex->moveTo(WINDOW_W / 2 - logoW / 2, -16 * 4);
                 logoTex->fadeIn();
+
                 player->moveTo(WINDOW_W / 2 - 32, WINDOW_H / 2);
                 player->lookAt(WINDOW_W / 2, 0);
+
+                gameState = GameState::MAIN_MENU;
             }
 
             if (quitButton->isClicked(event))
@@ -181,32 +197,23 @@ void Game::handleEvents()
 
 void Game::update(float dt)
 {
+    // update background and player no matter what
     for (auto &it : bgLayer)
         it.update(dt);
+    player->update(dt);
 
+    // if gamestate is playing, update enemies, bullets
     if (gameState == GameState::PLAYING)
     {
         enemyManager->update(dt, player);
         enemyManager->handleEnemyBulletCollision(bullets);
         for (auto &bullet : bullets)
             bullet.update(dt);
-        player->update(dt);
 
-        if (gameState == GameState::PLAYING)
+        if (enemyManager->allEnemiesDefeated())
         {
-            enemyManager->update(dt, player);
-            enemyManager->handleEnemyBulletCollision(bullets);
-
-            for (auto &bullet : bullets)
-                bullet.update(dt);
-
-            player->update(dt);
-
-            if (enemyManager->allEnemiesDefeated())
-            {
-                gameState = GameState::LEVEL_CLEARED;
-                levelTimer = 0.0f;
-            }
+            gameState = GameState::LEVEL_CLEARED;
+            levelTimer = 0.0f;
         }
     }
 
@@ -214,14 +221,14 @@ void Game::update(float dt)
     {
         levelTimer += dt;
 
-        if (levelTimer > 3.0f) 
+        if (levelTimer > 1.0f)
         {
+            // load next level
             currentLevelIndex++;
 
+            // if level exceed then return to main menu
             if (currentLevelIndex >= levels.size())
             {
-                levelLabel->setText("Game Complete!");
-                levelLabel->fadeIn();
                 gameState = GameState::MAIN_MENU;
             }
             else
@@ -231,16 +238,30 @@ void Game::update(float dt)
                 enemyManager->clear();
                 bullets.clear();
 
+                // set parameters for wave
                 enemyManager->startWave(level.numEnemies, level.enemySpeed, level.spawnDelay);
 
                 levelTimer = 0.0f;
                 gameState = GameState::PLAYING;
             }
+
+            std::string s = "level " + std::to_string(currentLevelIndex) + " Cleared";
+            levelIndication->setText(s);
+            levelIndication->moveTo(0, WINDOW_H / 2);
+            levelIndicationShown = true;
+            levelIndicationTime = SDL_GetTicks();
         }
     }
+
+    if(levelIndicationShown && SDL_GetTicks() - levelIndicationTime >= 2000){
+        levelIndication->moveTo(-200, WINDOW_H / 2);
+        levelIndicationShown = false;
+    }
+
     if (gameState == GameState::MAIN_MENU)
     {
-        player->update(dt);
+
+        // player->update(dt);
     }
 
     if (gameState == GameState::PAUSED)
@@ -248,13 +269,12 @@ void Game::update(float dt)
         resumeButton->update(dt);
         quitToMainMenu->update(dt);
         quitButton->update(dt);
-        // player->update(dt); 
     }
 
     startButton->update(dt);
     exitButton->update(dt);
     settingsButton->update(dt);
-
+    levelIndication->update(dt);
     logoTex->update(dt);
 }
 
@@ -263,6 +283,7 @@ void Game::render()
     SDL_SetRenderDrawColor(renderer, 160, 32, 240, 255);
     SDL_RenderClear(renderer);
 
+    // draw bg layers
     for (auto &it : bgLayer)
     {
         it.render(renderer);
@@ -272,11 +293,12 @@ void Game::render()
     exitButton->render(renderer);
     settingsButton->render(renderer);
     logoTex->render(renderer);
+
     player->render(renderer);
 
     if (gameState == GameState::PAUSED)
     {
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 160); 
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 160);
         SDL_FRect pauseBox = {
             WINDOW_W / 2 - 250.0f,
             WINDOW_H / 2 - 150.0f,
@@ -291,15 +313,14 @@ void Game::render()
         quitButton->render(renderer);
     }
 
-
     if (gameState == GameState::PLAYING)
     {
         enemyManager->render(renderer, player);
         for (auto &bullet : bullets)
             bullet.render(renderer);
-
     }
 
+    levelIndication->render(renderer);
     SDL_RenderPresent(renderer);
 }
 
