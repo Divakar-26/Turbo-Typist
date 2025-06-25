@@ -58,3 +58,8 @@ void TextureManager::drawRotated(const std::string &id,const SDL_FRect &dst, SDL
     std::cerr<<"Texture "<<id<<" not found in Textures"<<std::endl;
   }
 }
+
+SDL_Texture* TextureManager::get(const std::string& id) {
+    auto it = textures.find(id);
+    return (it != textures.end()) ? it->second : nullptr;
+}

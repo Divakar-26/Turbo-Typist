@@ -1,29 +1,18 @@
 #include "game.h"
-#include "enemy.h"
-#include <string>
-#include <iostream>
-#include <unordered_set>
 
-std::string currentTyped;
-int targetedEnemyIndex = -1;
 std::string inputBuffer;
 
-bool checkCollision(float x1, float y1, float w1, float h1,
-                    float x2, float y2, float w2, float h2)
-{
-    return !(x1 + w1 < x2 || x1 > x2 + w2 ||
-             y1 + h1 < y2 || y1 > y2 + h2);
-}
 
 Game::Game(int width, int height)
-    : WINDOW_W(width), WINDOW_H(height), isRunning(false),enemyManager(width, height) {}
+    : WINDOW_W(width), WINDOW_H(height), isRunning(false) {}
 
+float logoW, logoH;
 Game::~Game()
 {
-    if (renderer)
-        SDL_DestroyRenderer(renderer);
-    if (window)
-        SDL_DestroyWindow(window);
+    delete startButton;
+    startButton = nullptr;
+
+    delete enemyManager;
     clean();
 }
 
@@ -38,22 +27,64 @@ bool Game::init(const char *title)
     if (!loadTextures())
         return false;
     SDL_StartTextInput(window);
+
     // loading word from words.txt
     wordManager.loadFromFile("words.txt");
 
     // parallax layers
-    anim = new Animation(100, 100, 400, 80, true, 20);
+    planetAnim = new Animation(100, 100, 400, 80, true, 20);
     bgLayer.emplace_back("bg4", 20.0f, WINDOW_W, WINDOW_H);
-    bgLayer.emplace_back("planet", 40.0f, WINDOW_W, WINDOW_H, anim, 200, 300, 300, 300);
-    // bgLayer.emplace_back("bg3", 60.0f, WINDOW_W, WINDOW_H);
+    // bgLayer.emplace_back("planet", 40.0f, WINDOW_W, WINDOW_H, planetAnim, 200, 300, 300, 300);
 
     // player Definition
-    player = new Player(64, WINDOW_W / 2 - 32, WINDOW_H - 32 - 100, "player", "boost");
+    // player = new Player(64, WINDOW_W / 2 - 32, WINDOW_H - 32 - 100, "player", "boost");
+    player = new Player(64, WINDOW_W / 2 - 32, WINDOW_H / 2, "player", "boost");
 
     // textManager and loading font
     textManager = new TextManager(renderer);
     textManager->loadFont("assets/sans.ttf", 20);
 
+    uiTextManager = new TextManager(renderer);
+    uiTextManager->loadFont("assets/mago1.ttf", 40);
+
+    enemyManager = new EnemyManager(WINDOW_W, WINDOW_H, &wordManager, textManager);
+
+    startButton = new UIButton(400, WINDOW_H - 150, "Start Game", {255, 255, 255, 255}, {255, 200, 0, 255}, uiTextManager);
+    exitButton = new UIButton(400, WINDOW_H - 100, "Exit", {255, 255, 255, 255}, {255, 200, 0, 255}, uiTextManager);
+    settingsButton = new UIButton(400, WINDOW_H - 50, "Settings", {255, 255, 255, 255}, {255, 200, 0, 255}, uiTextManager);
+
+    startButton->moveTo(400 - startButton->getWidth() / 2, WINDOW_H - 150);
+    exitButton->moveTo(400 - exitButton->getWidth() / 2, WINDOW_H - 100);
+    settingsButton->moveTo(400 - settingsButton->getWidth() / 2, WINDOW_H - 50);
+    startButton->fadeIn();
+
+    resumeButton = new UIButton(400, 200, "Resume", {255, 255, 255, 255}, {200, 255, 200, 255}, uiTextManager);
+    quitToMainMenu = new UIButton(400, 260, "Main Menu", {255, 255, 255, 255}, {255, 200, 200, 255}, uiTextManager);
+    quitButton = new UIButton(400, 320, "Quit", {255, 255, 255, 255}, {255, 100, 100, 255}, uiTextManager);
+
+    resumeButton->moveTo(400 - resumeButton->getWidth() / 2, 200);
+    quitToMainMenu->moveTo(400 - quitToMainMenu->getWidth() / 2, 260);
+    quitButton->moveTo(400 - quitButton->getWidth() / 2, 320);
+
+    logoW = 400.0f;
+    logoH = 400.0f;
+    logoTex = new TextureObject("logo", WINDOW_W / 2 - logoW / 2, -16 * 4, logoW, logoH);
+
+    float initialSpeed = 40.0f;
+    float initialDelay = 2000.0f;
+    int initialEnemies = 5;
+
+    for (int i = 1; i <= 9999; ++i) // Endless (or a large number)
+    {
+        float speed = initialSpeed + (i - 1) * 2.0f;                     // Increase slowly
+        float delay = std::max(500.0f, initialDelay - (i - 1) * 100.0f); // Never below 500ms
+        int numEnemies = initialEnemies + (i - 1) * 2;
+
+        int minLength = std::min(5, 3 + i / 2);
+        int maxLength = std::min(15, 5 + i / 2);
+
+        levels.push_back({i, numEnemies, speed, delay, minLength, maxLength});
+    }
     isRunning = true;
     return true;
 }
@@ -69,72 +100,79 @@ void Game::handleEvents()
             isRunning = false;
         }
 
-        if (event.type == SDL_EVENT_KEY_DOWN)
-        {
-            Uint32 now = SDL_GetTicks();
-            if (now - lastBulletTime > bulletDelay)
-            {
-                // player->shoot(bullets);
-                lastBulletTime = now;
-            }
-        }
-
-        if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
-        {
-            float x, y;
-            SDL_GetMouseState(&x, &y);
-            for (auto &it : enemies)
-            {
-                if (x >= it.getX() && x <= it.getX() + it.getSize() && y >= it.getY() && y <= it.getY() + it.getSize())
-                {
-                    std::cout << it.getWord() << std::endl;
-                    std::cout << it.health << std::endl;
-                }
-            }
-        }
-
-        if (event.type == SDL_EVENT_TEXT_INPUT)
+        if (event.type == SDL_EVENT_TEXT_INPUT && gameState == GameState::PLAYING)
         {
             inputBuffer += event.text.text;
-            printf("Typed character: %c\n", inputBuffer[0]);
+            SDL_Log("Typed character: %c", inputBuffer[0]);
 
-            for (char inputChar : inputBuffer)
+            enemyManager->handleTyping(inputBuffer, player, bullets);
+        }
+
+        if (gameState == GameState::MAIN_MENU)
+        {
+
+            startButton->handleEvent(event);
+            exitButton->handleEvent(event);
+            settingsButton->handleEvent(event);
+            if (startButton->isClicked(event))
             {
-                if (targetedEnemyIndex == -1)
-                {
-                    for (size_t i = 0; i < enemies.size(); ++i)
-                    {
-                        if (inputChar == enemies[i].getWord()[0])
-                        {
-                            targetedEnemyIndex = i;
-                            enemies[i].isTargeted = true;
-                            if (!enemies[i].lockAnim)
-                            {
-                                enemies[i].lockAnim = new Animation(32, 32, 4, 100, true, 4); // frames: 1-4
-                            }
+                player->moveTo(WINDOW_W / 2 - 32, WINDOW_H - 32 - 100);
+                logoTex->moveTo(200, -500);
+                logoTex->fadeOut();
+                exitButton->moveTo(400 - exitButton->getWidth() / 2, WINDOW_H + 150);
+                startButton->moveTo(400 - startButton->getWidth() / 2, WINDOW_H + 200);
+                settingsButton->moveTo(400 - settingsButton->getWidth() / 2, WINDOW_H + 250);
 
-                            player->lookAt(enemies[i].getX() + enemies[i].getSize() / 2, enemies[i].getY() + enemies[i].getSize() / 2);
-                            player->shoot(bullets);
-                            enemies[i].getHit();
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    auto &it = enemies[targetedEnemyIndex];
-                    if (inputChar == it.getWord()[it.getWord().size() - it.health])
-                    {
-                        player->shoot(bullets);
-                        enemies[targetedEnemyIndex].getHit();
-                    }
-                    if (enemies[targetedEnemyIndex].health == 0)
-                    {
-                        targetedEnemyIndex = -1;
-                    }
-                }
+                const Level &level = levels[currentLevelIndex];
+                enemyManager->clear(); // ensure no previous garbage
+                bullets.clear();       // clear bullets
+                enemyManager->startWave(level.numEnemies, level.enemySpeed, level.spawnDelay);
+
+
+                gameState = GameState::PLAYING;
+                // Trigger your logic here, like changing game state
             }
-            inputBuffer.clear(); // Don't forget to clear it after processing
+            else if (exitButton->isClicked(event))
+            {
+                isRunning = false;
+            }
+        }
+        if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_ESCAPE)
+        {
+            if (gameState == GameState::PLAYING)
+                gameState = GameState::PAUSED;
+            else if (gameState == GameState::PAUSED)
+                gameState = GameState::PLAYING;
+        }
+        if (gameState == GameState::PAUSED)
+        {
+            resumeButton->handleEvent(event);
+            quitToMainMenu->handleEvent(event);
+            quitButton->handleEvent(event);
+
+            if (resumeButton->isClicked(event))
+            {
+                gameState = GameState::PLAYING;
+            }
+
+            if (quitToMainMenu->isClicked(event))
+            {
+                gameState = GameState::MAIN_MENU;
+                // Reset positions or reinit as needed
+                startButton->moveTo(400 - startButton->getWidth() / 2, WINDOW_H - 150);
+                exitButton->moveTo(400 - exitButton->getWidth() / 2, WINDOW_H - 100);
+                settingsButton->moveTo(400 - settingsButton->getWidth() / 2, WINDOW_H - 50);
+                startButton->fadeIn();
+                logoTex->moveTo(WINDOW_W / 2 - logoW / 2, -16 * 4);
+                logoTex->fadeIn();
+                player->moveTo(WINDOW_W / 2 - 32, WINDOW_H / 2);
+                player->lookAt(WINDOW_W / 2, 0);
+            }
+
+            if (quitButton->isClicked(event))
+            {
+                isRunning = false;
+            }
         }
 
         // player->handleEvent(event);
@@ -143,103 +181,85 @@ void Game::handleEvents()
 
 void Game::update(float dt)
 {
-    for (auto it = enemies.begin(); it != enemies.end();)
-    {
-        if (it->isDead())
-        {
-            if (it->isDeathAnimFinished())
-            {
-                int index = std::distance(enemies.begin(), it);
-
-                if (index == targetedEnemyIndex)
-                {
-                    targetedEnemyIndex = -1;
-                    enemies[index].isTargeted = false;
-                    currentTyped.clear();
-                }
-                else if (index < targetedEnemyIndex)
-                {
-                    targetedEnemyIndex--;
-                }
-                it = enemies.erase(it);
-                continue;
-            }
-        }
-        else if (it->isOffScreen(WINDOW_H))
-        {
-            int index = std::distance(enemies.begin(), it);
-
-            if (index == targetedEnemyIndex)
-            {
-                targetedEnemyIndex = -1;
-                enemies[index].isTargeted = false;
-                currentTyped.clear();
-            }
-            else if (index < targetedEnemyIndex)
-            {
-                targetedEnemyIndex--;
-            }
-
-            it = enemies.erase(it);
-            continue;
-        }
-
-        ++it;
-    }
-
-    handleEnemeyBulletCollison();
-
-    if (SDL_GetTicks() - lastSpawnTime > spawnDelay)
-    {
-        spawnEnemy();
-        lastSpawnTime = SDL_GetTicks();
-    }
-
-    for (auto &it : enemies)
-    {
-        it.update(dt, player->getX(), player->getY());
-    }
-
-    for (auto it = enemies.begin(); it != enemies.end();)
-    {
-        int index = std::distance(enemies.begin(), it);
-        if (it->isOffScreen(WINDOW_H))
-        {
-            if (index == targetedEnemyIndex)
-            {
-                targetedEnemyIndex = -1;
-                currentTyped.clear();
-            }
-            else if (index < targetedEnemyIndex)
-            {
-                targetedEnemyIndex--;
-            }
-
-            it = enemies.erase(it);
-        }
-        else
-        {
-            ++it;
-        }
-    }
-
     for (auto &it : bgLayer)
-    {
         it.update(dt);
-    }
-    for (auto &bullet : bullets)
-        bullet.update(dt);
 
-    player->update(dt);
-
-    // float x, y;
-    // SDL_GetMouseState(&x, &y);
-    if (targetedEnemyIndex >= 0 && targetedEnemyIndex < enemies.size())
+    if (gameState == GameState::PLAYING)
     {
-        auto &enemy = enemies[targetedEnemyIndex];
-        player->lookAt(enemy.getX() + enemy.getSize() / 2, enemy.getY() + enemy.getSize() / 2);
+        enemyManager->update(dt, player);
+        enemyManager->handleEnemyBulletCollision(bullets);
+        for (auto &bullet : bullets)
+            bullet.update(dt);
+        player->update(dt);
+
+        if (gameState == GameState::PLAYING)
+        {
+            enemyManager->update(dt, player);
+            enemyManager->handleEnemyBulletCollision(bullets);
+
+            for (auto &bullet : bullets)
+                bullet.update(dt);
+
+            player->update(dt);
+
+            if (enemyManager->allEnemiesDefeated())
+            {
+                gameState = GameState::LEVEL_CLEARED;
+                levelTimer = 0.0f;
+            }
+        }
     }
+
+    if (gameState == GameState::LEVEL_CLEARED)
+    {
+        levelTimer += dt;
+
+        if (levelTimer > 3.0f) // wait 3 seconds before next level
+        {
+            currentLevelIndex++;
+
+            if (currentLevelIndex >= levels.size())
+            {
+                levelLabel->setText("Game Complete!");
+                levelLabel->fadeIn();
+                gameState = GameState::MAIN_MENU;
+            }
+            else
+            {
+                const Level &level = levels[currentLevelIndex];
+
+                enemyManager->clear();
+                bullets.clear();
+
+                enemyManager->startWave(level.numEnemies, level.enemySpeed, level.spawnDelay);
+
+                levelTimer = 0.0f;
+                gameState = GameState::PLAYING;
+            }
+        }
+    }
+    // Only update player animation on menu (if needed)
+    if (gameState == GameState::MAIN_MENU)
+    {
+        player->update(dt);
+    }
+
+    if (gameState == GameState::PAUSED)
+    {
+        resumeButton->update(dt);
+        quitToMainMenu->update(dt);
+        quitButton->update(dt);
+        // player->update(dt);  <- Avoid this if it’s gameplay logic
+    }
+
+    // UI elements update regardless of state
+    startButton->update(dt);
+    exitButton->update(dt);
+    settingsButton->update(dt);
+
+    logoTex->update(dt);
 }
+
 void Game::render()
 {
     SDL_SetRenderDrawColor(renderer, 160, 32, 240, 255);
@@ -250,46 +270,37 @@ void Game::render()
         it.render(renderer);
     }
 
+    startButton->render(renderer);
+    exitButton->render(renderer);
+    settingsButton->render(renderer);
+    logoTex->render(renderer);
     player->render(renderer);
 
-    for (size_t i = 0; i < enemies.size(); ++i)
+    if (gameState == GameState::PAUSED)
     {
-        auto &it = enemies[i];
-        it.render(renderer, player->getX(), player->getY());
-
-        if (i == targetedEnemyIndex)
-        {
-            textManager->renderText(it.getWord(),
-                                    it.getX() + it.getSize() / 2.0f,
-                                    it.getY() - 20,
-                                    {255, 0, 0, 255}, // Red color for targeted enemy
-                                    {0, 0, 0, 128},
-                                    true);
-        }
-        else
-        {
-            textManager->renderText(it.getWord(),
-                                    it.getX() + it.getSize() / 2.0f,
-                                    it.getY() - 20,
-                                    {255, 255, 255, 255}, // White color for normal enemies
-                                    {0, 0, 0, 128},
-                                    true);
-        }
-
-        if (it.lockAnim && !it.lockAnim->isFinished())
-        {
-            SDL_FRect src = it.lockAnim->getSrcRect();
-            SDL_FRect dst = {
-                it.getX() + it.getSize() / 2 - 32,
-                it.getY() + it.getSize() / 2 - 32,
-                64, 64};
-            SDL_FPoint center = {32, 32};
-            TextureManager::drawRotated("lock", dst, renderer, &src, it.lockAnimTime * 100.0f, &center);
-        }
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 160); // RGBA (black with 160 alpha)
+        SDL_FRect pauseBox = {
+            WINDOW_W / 2 - 250.0f,
+            WINDOW_H / 2 - 150.0f,
+            500.0f,
+            300.0f};
+        SDL_RenderFillRect(renderer, &pauseBox);
+        enemyManager->render(renderer, player);
+        for (auto &bullet : bullets)
+            bullet.render(renderer);
+        resumeButton->render(renderer);
+        quitToMainMenu->render(renderer);
+        quitButton->render(renderer);
     }
 
-    for (auto &bullet : bullets)
-        bullet.render(renderer);
+
+    if (gameState == GameState::PLAYING)
+    {
+        enemyManager->render(renderer, player);
+        for (auto &bullet : bullets)
+            bullet.render(renderer);
+
+    }
 
     SDL_RenderPresent(renderer);
 }
@@ -299,36 +310,6 @@ void Game::clean()
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
-}
-
-void Game::spawnEnemy()
-{
-    static std::vector<std::string> textures = {"enemy_1", "enemy_2", "enemy_3", "enemy_4", "enemy_5"};
-
-    // Step 1: Collect used first letters
-    std::unordered_set<char> usedLetters;
-    for (const auto &e : enemies)
-    {
-        if (!e.getWord().empty())
-            usedLetters.insert(std::tolower(e.getWord()[0]));
-    }
-
-    // Step 2: Get a new word avoiding used letters
-    std::string word = wordManager.getWordAvoiding(usedLetters, 8);
-    if (word.empty())
-    {
-        SDL_Log("No valid word with unique starting letter available!");
-        return;
-    }
-
-    SDL_Log("Spawning enemy with word: %s", word.c_str());
-
-    std::string texId = textures[rand() % textures.size()];
-    float randX = rand() % (WINDOW_W - 48);
-    float speed = 20.f + rand() % 50;
-    int s = rand() % 40 + 40;
-
-    enemies.emplace_back(s, randX, -48.0f, speed, word, texId);
 }
 
 bool Game::initSDL()
@@ -363,6 +344,7 @@ bool Game::initWindowAndRenderer(const char *title)
         SDL_Log("Renderer creation failed: %s", SDL_GetError());
         return false;
     }
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     return true;
 }
 
@@ -384,7 +366,8 @@ bool Game::loadTextures()
         {"textbox_right", "assets/right_cap.png"},
         {"planet", "assets/planets/planet_1.png"},
         {"explosion", "assets/explode.png"},
-        {"lock", "assets/lock_1.png"}};
+        {"lock", "assets/lock_1.png"},
+        {"logo", "assets/turboTypist.png"}};
 
     for (const auto &[id, path] : textures)
     {
@@ -395,58 +378,4 @@ bool Game::loadTextures()
         }
     }
     return true;
-}
-
-void Game::handleEnemeyBulletCollison()
-{
-    for (auto bulletIt = bullets.begin(); bulletIt != bullets.end();)
-    {
-        bool bulletRemoved = false;
-
-        for (auto enemyIt = enemies.begin(); enemyIt != enemies.end();)
-        {
-            float bx = bulletIt->getX();
-            float by = bulletIt->getY();
-            float bw = bulletIt->getWidth(); // or size
-            float bh = bulletIt->getHeight();
-
-            float ex = enemyIt->getX();
-            float ey = enemyIt->getY();
-            float ew = enemyIt->getSize();
-            float eh = enemyIt->getSize();
-
-            if (checkCollision(bx, by, bw, bh, ex, ey, ew, eh))
-            {
-                int enemyIndex = std::distance(enemies.begin(), enemyIt);
-
-                // Remove bullet
-                bulletIt = bullets.erase(bulletIt);
-                bulletRemoved = true;
-
-                // Reset lock-on if this was the target
-                // if (enemyIndex == targetedEnemyIndex)
-                // {
-                //     targetedEnemyIndex = -1;
-                //     currentTyped.clear();
-                // }
-                // else if (enemyIndex < targetedEnemyIndex)
-                // {
-                //     targetedEnemyIndex--; // adjust index
-                // }
-
-                // Remove enemy
-                // enemyIt = enemies.erase(enemyIt);
-
-                // enemies[enemyIndex].getHit();
-                break; // one bullet can hit only one enemy
-            }
-            else
-            {
-                ++enemyIt;
-            }
-        }
-
-        if (!bulletRemoved)
-            ++bulletIt;
-    }
 }

@@ -1,6 +1,5 @@
+#pragma once
 #include <SDL3/SDL_rect.h>
-#define TEXTUREMANAGER_H
-
 #include <SDL3/SDL.h>
 #include <string>
 #include <unordered_map>
@@ -13,6 +12,7 @@ class TextureManager{
   static void drawRotated(const std::string &id,const SDL_FRect &dst, SDL_Renderer * renderer, SDL_FRect * src , double angle, const SDL_FPoint * center = nullptr, SDL_FlipMode flip = SDL_FLIP_NONE);
   static void Drop(const std::string & id);
   static void clean();
+  static SDL_Texture* get(const std::string& id);
 
   private:
    static std::unordered_map<std::string, SDL_Texture *> textures;

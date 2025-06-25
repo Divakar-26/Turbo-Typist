@@ -5,16 +5,43 @@
 #include <cstdlib>
 #include <ctime>
 #include <vector>
+#include <string>
+#include <iostream>
+#include <unordered_set>
 
 #include "Player.h"
-#include "enemy.h"
 #include "parallaxLayer.h"
 #include "bullet.h"
 #include "wordManager.h"
 #include "animation.h"
 #include "textManager.h"
+#include "enemyManager.h"
+#include "UIButton.h"
+#include "UILabel.h"
+#include "TextureObject.h"
 
+enum class GameState
+{
+    MAIN_MENU,
+    PLAYING,
+    PAUSED,
+    LEVEL_CLEARED,
+    GAME_OVER
+};
 
+struct Level
+{
+    int levelNumber;
+    int numEnemies;
+    int wordLengthMin;
+    int wordLengthMax;
+    float enemySpeed;
+    float spawnDelay; // time between spawns
+
+    Level(int lvl, int count, float speed, float delay, int minLen, int maxLen)
+        : levelNumber(lvl), numEnemies(count), enemySpeed(speed), spawnDelay(delay),
+          wordLengthMin(minLen), wordLengthMax(maxLen) {}
+};
 class Game
 {
 public:
@@ -31,14 +58,9 @@ public:
 
     void spawnEnemy();
 
-
     bool initSDL();
-    bool initWindowAndRenderer(const char * title);
+    bool initWindowAndRenderer(const char *title);
     bool loadTextures();
-
-
-    void handleEnemeyBulletCollison();
-    bool showGrid = true;
 
 private:
     int WINDOW_W;
@@ -50,21 +72,36 @@ private:
 
     Player *player;
 
-    std::vector<Enemy> enemies;
-    Uint32 lastSpawnTime = 0;
-    Uint32 spawnDelay = 1500;
-
     std::vector<ParallaxLayer> bgLayer;
-    std::vector<ParallaxLayer> planetLayers;
-    Uint32 lastPlanetSpawnTime = 0;
-    const Uint32 planetSpawnDelay = 8000;
 
     std::vector<Bullet> bullets;
     Uint32 lastBulletTime = 0;
     Uint32 bulletDelay = 0;
 
     WordManager wordManager;
-    Animation *anim;
-    
-    TextManager * textManager;
+    TextManager *textManager;
+    TextManager *uiTextManager;
+
+    Animation *planetAnim;
+    GameState gameState = GameState::MAIN_MENU;
+
+    EnemyManager *enemyManager = nullptr;
+
+    UIButton *startButton = nullptr;
+    UIButton *exitButton = nullptr;
+    UIButton *settingsButton = nullptr;
+    UIButton *resumeButton = nullptr;
+    UIButton *quitToMainMenu = nullptr;
+    UIButton *quitButton = nullptr;
+    UILabel *label = nullptr;
+
+    TextureObject *logoTex;
+    // UILabel *levelLabel = nullptr;
+
+    int currentLevelIndex = 0;
+    float levelTimer = 0.0f;
+    bool waitingForNextLevel = false;
+
+    std::vector<Level> levels;
+    UILabel *levelLabel;
 };

@@ -10,6 +10,8 @@ Player::Player(int size, float x, float y, const std::string &texId, const std::
   this->size = size;
   this->x = x;
   this->y = y;
+  this->targetX = x; 
+  this->targetY = y; 
   this->textureId = texId;
   this->thrusterTexId = thId;
   anim = new Animation(48, 48, 2, 100, true, 2);
@@ -42,6 +44,22 @@ void Player::handleEvent(SDL_Event &event)
 void Player::update(float dt)
 {
   anim->update();
+
+  float dx = targetX - x;
+  float dy = targetY - y;
+  float dist = sqrt(dx * dx + dy * dy);
+  if (dist > 1.0f)
+  {
+    float angle = atan2(dy, dx);
+    float stepX = cos(angle) * moveSpeed * dt;
+    float stepY = sin(angle) * moveSpeed * dt;
+    if (abs(stepX) > abs(dx))
+      stepX = dx;
+    if (abs(stepY) > abs(dy))
+      stepY = dy;
+    x += stepX;
+    y += stepY;
+  }
 
   hoverTime += dt;
   hoverOffset = std::sin(hoverTime * 2.0f) * 2.0f;
@@ -109,4 +127,10 @@ void Player::lookAt(float x, float y)
   float dx = x - (this->x + size / 2.0f);
   float dy = y - (this->y + size / 2.0f);
   angle = std::atan2(dy, dx) * (180.0f / M_PI) + 90.0f;
+}
+
+void Player::moveTo(float x, float y)
+{
+  targetX = x;
+  targetY = y;
 }

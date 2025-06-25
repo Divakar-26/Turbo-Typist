@@ -23,6 +23,8 @@ public:
   void shoot(std::vector<Bullet> &bullets);
   void lookAt(float x, float y);
 
+  void moveTo(float x, float y);
+
 private:
   float x, y;
   int size;
@@ -32,6 +34,9 @@ private:
 
   float hoverTime = 0.0f;
   float hoverOffset = 0.0f;
+
+  float targetX, targetY;
+  float moveSpeed = 300.0f;
 };
 
 #endif // !DEBUG
