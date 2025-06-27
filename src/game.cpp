@@ -6,6 +6,14 @@ float logoW, logoH;
 bool levelIndicationShown = false;
 Uint32 levelIndicationTime = 0.0f;
 
+bool checkCollision(const SDL_FRect &a, const SDL_FRect &b)
+{
+    return !(a.x + a.w < b.x || // a is left of b
+             a.x > b.x + b.w || // a is right of b
+             a.y + a.h < b.y || // a is above b
+             a.y > b.y + b.h);  // a is below b
+}
+
 Game::Game(int width, int height)
     : WINDOW_W(width), WINDOW_H(height), isRunning(false) {}
 
@@ -42,9 +50,9 @@ bool Game::init(const char *title)
     // player = new Player(64, WINDOW_W / 2 - 32, WINDOW_H - 32 - 100, "player", "boost");
     player = new Player(64, WINDOW_W / 2 - 32, WINDOW_H / 2, "player", "boost");
 
-    // textManager and loading font
+    // textManager and loading font`
     textManager = new TextManager(renderer);
-    textManager->loadFont("assets/mago1.ttf", 20);
+    textManager->loadFont("assets/mago1.ttf", 40);
 
     uiTextManager = new TextManager(renderer);
     uiTextManager->loadFont("assets/mago1.ttf", 40);
@@ -137,7 +145,6 @@ void Game::handleEvents()
                 const Level &level = levels[currentLevelIndex];
                 enemyManager->clear();
                 bullets.clear();
-
 
                 enemyManager->startWave(level.numEnemies, level.enemySpeed, level.spawnDelay);
                 gameState = GameState::PLAYING;
@@ -253,7 +260,8 @@ void Game::update(float dt)
         }
     }
 
-    if(levelIndicationShown && SDL_GetTicks() - levelIndicationTime >= 2000){
+    if (levelIndicationShown && SDL_GetTicks() - levelIndicationTime >= 2000)
+    {
         levelIndication->moveTo(-200, WINDOW_H / 2);
         levelIndicationShown = false;
     }
@@ -269,6 +277,20 @@ void Game::update(float dt)
         resumeButton->update(dt);
         quitToMainMenu->update(dt);
         quitButton->update(dt);
+    }
+
+    auto &enemies = enemyManager->getEnemies();
+    for (auto it = enemies.begin(); it != enemies.end(); ++it)
+    {
+        if (checkCollision(player->getBounds(), it->getBounds()) && !it->isDead())
+        {
+            SDL_Log("Enemy collision");
+            while (!it->isDead())
+            {
+                it->getHit();
+            }
+            break;
+        }
     }
 
     startButton->update(dt);
@@ -386,7 +408,9 @@ bool Game::loadTextures()
         {"planet", "assets/planets/planet_1.png"},
         {"explosion", "assets/explode.png"},
         {"lock", "assets/lock_1.png"},
-        {"logo", "assets/turboTypist.png"}};
+        {"logo", "assets/turboTypist.png"},
+        {"healthbar", "assets/healthbar1.png"}
+     };
 
     for (const auto &[id, path] : textures)
     {

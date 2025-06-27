@@ -26,8 +26,11 @@ public:
     if (health <= 0 || dead)
       return;
 
-    word[word.size() - health] = ' ';
-    health--;
+    if (health > 0 && health <= word.size())
+    {
+      word.erase(word.size() - health, 1); // removes 1 character at position
+      health--;
+    }
 
     knockbackVelocity = -20.0f;
     knockbackDuration = maxKnockbackTime;
@@ -48,6 +51,12 @@ public:
   bool isTargeted = false;
   float lockAnimTime = 0.0f;
   Animation *lockAnim = nullptr; // lock-on animation
+
+  SDL_FRect getBounds() const
+  {
+    return SDL_FRect{x, y, (float)size, (float)size};
+  }
+
 private:
   float x, y;
   float speed;

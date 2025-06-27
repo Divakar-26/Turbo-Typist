@@ -24,19 +24,36 @@ public:
   void lookAt(float x, float y);
 
   void moveTo(float x, float y);
+  SDL_FRect getBounds() const
+  {
+    return SDL_FRect{x, y, (float)size, (float)size};
+  }
+
+  void getHit(int n){
+    if(health - n < 0){
+      return ;
+    }
+    health -= n;
+  }
 
 private:
+
   float x, y;
   int size;
   std::string textureId;
   std::string thrusterTexId;
   Animation *anim;
 
+  int health = 5;
+
   float hoverTime = 0.0f;
   float hoverOffset = 0.0f;
 
   float targetX, targetY;
   float moveSpeed = 100.0f;
+
+  std::string healtbarTexture = "healthbar";
+  SDL_FRect healthbarDest = {800 / 2 - 16*3*3 /2  , 600 - 16*3, 16*3*3, 16*3};
 };
 
 #endif // !DEBUG

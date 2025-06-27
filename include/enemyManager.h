@@ -36,6 +36,8 @@ public:
         totalEnemiesSpawned = 0;
     }
 
+    std::vector<Enemy>& getEnemies();
+
 private:
     std::vector<Enemy> enemies;
     Uint32 lastSpawnTime = 0;

@@ -251,3 +251,8 @@ bool EnemyManager::allEnemiesDefeated() const
 {
     return spawning && totalEnemiesSpawned >= enemiesToSpawn && enemies.empty();
 }
+
+std::vector<Enemy>& EnemyManager::getEnemies(){
+
+    return enemies;
+}

@@ -95,8 +95,11 @@ void Player::render(SDL_Renderer *renderer)
 
   TextureManager::drawRotated(thrusterTexId, thrusterDst1, renderer, &src, angle, &center);
   TextureManager::drawRotated(thrusterTexId, thrusterDst2, renderer, &src, angle, &center);
-
   TextureManager::drawRotated(textureId, playerDst, renderer, nullptr, angle, &center);
+
+  SDL_FRect healthSrc = {0,0,16*3, 16};
+
+  TextureManager::draw(healtbarTexture, healthbarDest, renderer, &healthSrc);
 }
 
 void Player::shoot(std::vector<Bullet> &bullets)
